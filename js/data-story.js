@@ -1,10 +1,11 @@
+google.load('visualization', '1', {packages: ['corechart', 'bar']});
 angular.module('data-story', []).controller('ServerController', function($scope) {
 
   // Current list of GMS servers
   $scope.servers = ["Scania", "Windia", "Bera", "KHROA", "MYBCKN", "GRAZED"];
 
   // Index of server selected
-  $scope.selectedIdx = 0;
+  $scope.selectedIdx = -1;
 
   // Current chart being displayed
   $scope.chart = new google.visualization.BarChart(document.getElementById('bar_chart'));
@@ -41,7 +42,7 @@ angular.module('data-story', []).controller('ServerController', function($scope)
     // If the chart for the server doesn't already exist,
     // parse the json and make a new one.
     if (views[server] === undefined){
-      var list = $scope.get(server);
+      var list = $scope.get($index);
       var graphData = [];
       graphData.push(['Item', 'Amount']);
 
@@ -56,25 +57,31 @@ angular.module('data-story', []).controller('ServerController', function($scope)
     // Draw the graph
     $scope.chart.draw(views[server], options);
 
+    $("p#intro").remove();
+
   };
 
   // Grabs the JSON and returns a list based on defined params
   // (for now, it just returns the amount of each equip items being sold from highest to lowest)
-  $scope.get = function(server){
-    $.getJSON("json/" + server + ".json", function(data) {
-      _.each(data[0].fm_items, function(item, key){
-        var i = _.findWhere(list, {"name" : item["O"]});
-        if (i){
-          i["amount"] += parseInt(item["a"]);
-        }
-        else {
-          if (item["Q"] === "Equip") list.push({"name" : item["O"], "amount" : parseInt(item["a"])});
-        }
-      });
-
-      list = _.sortBy(list, 'amount').reverse();
+  $scope.get = function(index){
+    var list = [];
+    $.ajax({
+      async: false,
+      type: "GET",
+      url: "http://maple.fm/api/2/search?server=" + index + "&stats=0&desc=0",
+      success: function(data){
+        _.each(data.fm_items, function(item, key){
+          var i = _.findWhere(list, {"name" : item["name"]});
+          if (i) i["amount"] += parseInt(item["quantity"]);
+          else {
+            if (item["category"] === "Equip"){
+              list.push({"name" : item["name"], "amount" : parseInt(item["quantity"])});
+            }
+          }
+        })
+      }
     });
-
-    return list;
-  }
+    
+    return _.sortBy(list, 'amount').reverse();
+  };
 });
