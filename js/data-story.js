@@ -44,10 +44,10 @@ angular.module('data-story', []).controller('ServerController', function($scope)
     if (views[server] === undefined){
       var list = $scope.get($index);
       var graphData = [];
-      graphData.push(['Item', 'Amount']);
+      graphData.push(['Item', 'Amount', { role: 'annotation' }]);
 
       for (var i = 0; i < 11; i++){
-        graphData.push([list[i]["name"], list[i]["amount"]]);
+        graphData.push([list[i]["name"], list[i]["amount"], list[i]["amount"]]);
       }
 
       // Otherwise, load what we already have
@@ -81,7 +81,7 @@ angular.module('data-story', []).controller('ServerController', function($scope)
         })
       }
     });
-    
+
     return _.sortBy(list, 'amount').reverse();
   };
 });
